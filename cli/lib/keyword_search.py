@@ -1,4 +1,5 @@
 from .search_utils import DEFAULT_SEARCH_LIMIT, load_movies, load_stopwords, CACHE_DIR
+from collections  import defaultdict, Counter
 from nltk.stem import PorterStemmer
 import string
 import os
@@ -11,14 +12,17 @@ stopWords = load_stopwords()
 class InvertedIndex:
     def __init__(self) -> None:
         self.index = defaultdict(set)
+        self.term_frequencies = defaultdict(Counter)
         self.docmap: dict[int, dict] = {}
         self.index_path = os.path.join(CACHE_DIR, "index.pkl")
         self.docmap_path = os.path.join(CACHE_DIR, "docmap.pkl")
+        self.tf_path = os.path.join(CACHE_DIR, "term_frequencies.pkl")
 
     def __add_document(self, doc_id:int, text:str) -> None:
         tokens = tokenize_text(text=text)
         for token in set(tokens):
             self.index[token].add(doc_id)
+        self.term_frequencies[doc_id].update(tokens)  #here 
 
     def get_documents(self, term:str)->list[int]:
         ids = sorted(list(self.index.get(term, set())))
@@ -36,20 +40,25 @@ class InvertedIndex:
             pickle.dump(self.index, file)
         with open(self.docmap_path, 'wb') as file:
             pickle.dump(self.docmap, file)
+        with open(self.tf_path, "wb") as f:
+            pickle.dump(self.term_frequencies, f)
 
-    def load(self)->None:
-        with open(self.index_path, 'rb') as file:
-            try:
-                self.index = pickle.load(file)
-            except:
-                pickle.PickleError
-        with open(self.docmap_path, 'rb') as file:
-            try:
-                self.docmap = pickle.load(file)
-            except:
-                pickle.PickleError
+    def load(self) -> None:
+        with open(self.index_path, "rb") as f:
+            self.index = pickle.load(f)
+        with open(self.docmap_path, "rb") as f:
+            self.docmap = pickle.load(f)
+        with open(self.tf_path, "rb") as f:
+            self.term_frequencies = pickle.load(f)
 
-        
+    def get_tf(self, doc_id: int, term: str) -> int:        
+        tokens = tokenize_text(term)
+        if len(tokens) > 1:
+            raise ValueError("term must be a single token")
+        if len(tokens) == 0:
+            return 0
+        token = tokens[0]
+        return self.term_frequencies[doc_id][token]
 
 def build_command() -> None:
     idx = InvertedIndex()
@@ -73,6 +82,7 @@ def search_command(query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> list[dict]:
             if len(results) >= limit:
                 break
     return results
+    
 
 def preprocess_text(text: str) -> str:
     text = text.lower()
@@ -94,4 +104,8 @@ def has_matching_token(query_tokens: list[str], title_tokens: list[str]) -> bool
                 return True
     return False
 
- 
+
+def tf_command(doc_id: int, term: str) -> int:
+    idx = InvertedIndex()
+    idx.load()
+    return idx.get_tf(doc_id, term)
