@@ -5,6 +5,7 @@ CACHE_DIR = os.path.join(PROJECT_ROOT, "cache")
 STOP_WORDS_PATH = os.path.join(PROJECT_ROOT, "data", "stopwords.txt")
 DATA_PATH = os.path.join(PROJECT_ROOT, "data", "movies.json")
 DEFAULT_SEARCH_LIMIT = 5
+BM25_K1 = 1.5
 
 
 
