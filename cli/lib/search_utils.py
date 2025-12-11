@@ -14,7 +14,6 @@ BM25_B = 0.75
 
 
 def load_movies() -> list[dict]:
-
     with open(DATA_PATH, "r") as f:
         data = json.load(f)
     return data["movies"]
