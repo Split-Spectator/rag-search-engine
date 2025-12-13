@@ -22,11 +22,12 @@ def main():
     embed_text_parser = subparsers.add_parser("embed_text", help="embed input text with model")
     embed_text_parser.add_argument("text", type=str, help="text to get model embedding")
 
-    chunk_parser = subparsers.add_parser("chunk", help="Split text into fixed-size chunks")
+    chunk_parser = subparsers.add_parser("chunk", help="Split text into fixed-size chunks and optional overlap")
     chunk_parser.add_argument("text", type=str, help="Text to chunk")
     chunk_parser.add_argument("--chunk-size", type=int, nargs='?', default=200, help="Size of each chunk in words")
-
-    search_parser = subparsers.add_parser("search", help="Semantic search for movies") #here but not others
+    chunk_parser.add_argument("--overlap", type=int, nargs='?', default=0, help="Number of words to overlap between chunks")
+    
+    search_parser = subparsers.add_parser("search", help="Semantic search for movies") 
     search_parser.add_argument("query", type=str, help="Search phrase")
     search_parser.add_argument("--limit", type=int, nargs="?", default=5)
 

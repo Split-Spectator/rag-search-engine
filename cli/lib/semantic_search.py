@@ -1,5 +1,5 @@
 from sentence_transformers import SentenceTransformer
-from .search_utils import CACHE_DIR, load_movies, DEFAULT_SEARCH_LIMIT, DEFAULT_CHUNK_SIZE
+from .search_utils import CACHE_DIR, load_movies, DEFAULT_SEARCH_LIMIT, DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_OVERLAP
 import numpy as np
 import os
 
@@ -121,21 +121,26 @@ def semantic_search(query, limit=DEFAULT_SEARCH_LIMIT):
         print(f"    {result["description"][:100]}...")
         print()
 
+
+def chunk_text(text: str, chunk_size: int = DEFAULT_CHUNK_SIZE, overlap: int = DEFAULT_CHUNK_OVERLAP
+) -> None:
+    chunks = fixed_size_chunking(text, chunk_size, overlap)
+    print(f"Chunking {len(text)} characters")
+    for i, chunk in enumerate(chunks):
+        print(f"{i + 1}. {chunk}")
         
-def fixed_size_chunking(text: str, chunk_size: int = DEFAULT_CHUNK_SIZE) -> list[str]:
+
+def fixed_size_chunking(text: str, chunk_size: int = DEFAULT_CHUNK_SIZE, overlap: int = DEFAULT_CHUNK_OVERLAP
+) -> list[str]:
     words = text.split()
     chunks = []
 
     i = 0
     while i < len(words):
         chunk_words = words[i : i + chunk_size]
+        if chunks and len(chunk_words) <= overlap:  
+            break         
         chunks.append(" ".join(chunk_words))
-        i += chunk_size
-
+        i += chunk_size - overlap
     return chunks
 
-def chunk_text(text: str, chunk_size: int = DEFAULT_CHUNK_SIZE) -> None:
-    chunks = fixed_size_chunking(text, chunk_size)
-    print(f"Chunking {len(text)} characters")
-    for i, chunk in enumerate(chunks):
-        print(f"{i + 1}. {chunk}")
