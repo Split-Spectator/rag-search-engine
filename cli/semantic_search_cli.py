@@ -5,7 +5,7 @@ from lib.semantic_search import (
     verify_embeddings, 
     embed_query_text, 
     semantic_search,
-    chunk_text
+    chunk_text,
 )
 import argparse
 
@@ -46,7 +46,7 @@ def main():
         case "search":
             semantic_search(args.query, args.limit)
         case "chunk":
-            chunk_text(args.text, args.chunk_size)
+            chunk_text(args.text, args.chunk_size, args.overlap)
         case _:
             parser.print_help()
         
