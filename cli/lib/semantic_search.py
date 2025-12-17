@@ -138,28 +138,46 @@ def fixed_size_chunking(text: str, chunk_size: int = DEFAULT_CHUNK_SIZE, overlap
 
     i = 0
     while i < len(words):
-        chunk_words = words[i : i + chunk_size]
-        if chunks and len(chunk_words) <= overlap:  
-            break         
+        chunk_words = words[i : i + chunk_size]       
         chunks.append(" ".join(chunk_words))
         i += chunk_size - overlap
     return chunks
 
+ 
 def semantic_chunk(
     text: str,
     max_chunk_size: int = DEFAULT_SEMANTIC_CHUNK_SIZE,
-    overlap: int = DEFAULT_CHUNK_OVERLAP
+    overlap: int = DEFAULT_CHUNK_OVERLAP,
 ) -> list[str]:
-    sentences = re.split(r'(?<=[.!?])\s+', text) 
+    text = text.strip()
+    if not text:
+        return []
+
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+
+    if len(sentences) == 1 and not text.endswith((".", "!", "?")):
+        sentences = [text]
+
     chunks = []
     i = 0
-    while i < len(sentences):
+    n_sentences = len(sentences)
+
+    while i < n_sentences:
         chunk_sentences = sentences[i : i + max_chunk_size]
-        if chunks and len(chunk_sentences) <= overlap: 
+        if chunks and len(chunk_sentences) <= overlap:
             break
-        chunks.append(" ".join(chunk_sentences))
+
+        cleaned_sentences = []
+        for chunk_sentence in chunk_sentences:
+            cleaned_sentences.append(chunk_sentence.strip())
+        if not cleaned_sentences:
+            continue
+        chunk = " ".join(cleaned_sentences)
+        chunks.append(chunk)
         i += max_chunk_size - overlap
+
     return chunks
+
 
 def semantic_chunk_text(
     text: str,
@@ -198,13 +216,12 @@ class ChunkedSemanticSearch(SemanticSearch):
                 max_chunk_size=DEFAULT_SEMANTIC_CHUNK_SIZE,
                 overlap=DEFAULT_CHUNK_OVERLAP,
             )
-
             for i, chunk in enumerate(chunks):
                 all_chunks.append(chunk)
                 chunk_metadata.append(
                     {"movie_idx": idx, "chunk_idx": i, "total_chunks": len(chunks)}
                 )
-
+              
         self.chunk_embeddings = self.model.encode(all_chunks, show_progress_bar=True)
         self.chunk_metadata = chunk_metadata
 
